@@ -384,12 +384,34 @@
             background-color: var(--secondary);
             color: white;
             text-decoration: line-through;
+            cursor: help; /* Indica que pode clicar de novo para ver ajuda/info */
         }
         .interactive-word.found-wrong {
             background-color: var(--danger);
             color: white;
             animation: shake 0.5s;
         }
+        /* --- ESTILOS DE COMPARAÇÃO (ANTES/DEPOIS) --- */
+        .comparison-box {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: #f1f2f6;
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 15px;
+            border: 1px solid #ced6e0;
+        }
+        .comp-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.1rem;
+            gap: 15px;
+        }
+        .comp-wrong { color: var(--danger); text-decoration: line-through; opacity: 0.7; }
+        .comp-correct { color: var(--secondary); font-weight: bold; transform: scale(1.1); }
+        .comp-arrow { font-size: 1.2rem; color: var(--text); }
 
         /* 3. Drag/Drop (Click to Fill) */
         .sentence-builder { font-size: 1.1rem; line-height: 2; }
@@ -659,12 +681,7 @@ const gameData = {
           {
             "target": "mentais,",
             "correction": "mentais",
-            "feedback": "Achou! Nunca separe o sujeito do verbo com vírgula."
-          },
-          {
-            "target": "dificulta",
-            "correction": "dificulta",
-            "feedback": "Isso! A vírgula anterior estava errada."
+            "feedback": "Achou! A vírgula está separando o sujeito do verbo. Isso é um erro grave!"
           },
           {
             "target": "devido a",
@@ -736,14 +753,15 @@ const gameData = {
       "id": 5,
       "title": "O Prefeito",
       "type": "slot_machine",
-      "instruction": "Monte a proposta de intervenção perfeita.",
+      "instruction": "Monte a proposta de intervenção perfeita para solucionar o problema do estigma.",
       "content": {
+        "context_text": "O problema identificado no seu texto foi a 'falta de informação nas escolas'. Agora, como autoridade no assunto, você precisa elaborar uma solução completa que respeite os Direitos Humanos. Defina os 5 elementos da proposta:",
         "slots": [
-          { "name": "Agente", "correct": "Ministério da Educação", "options": ["Eu mesmo", "Ministério da Educação", "A Polícia"] },
-          { "name": "Ação", "correct": "Criar projetos sobre saúde mental", "options": ["Prender quem tem preconceito", "Criar projetos sobre saúde mental", "Esperar passar"] },
-          { "name": "Meio", "correct": "Palestras e debates", "options": ["Palestras e debates", "Por meio de mágica", "Gritando"] },
-          { "name": "Efeito", "correct": "Reduzir o preconceito", "options": ["Ficar rico", "Reduzir o preconceito", "Nada"] },
-          { "name": "Detalhamento", "correct": "Semana de Valorização da Vida", "options": ["Tipo assim", "Semana de Valorização da Vida", "Etc"] }
+          { "name": "Quem? (Agente)", "correct": "Ministério da Educação", "options": ["Eu mesmo", "Ministério da Educação", "A Polícia"] },
+          { "name": "O quê? (Ação)", "correct": "Criar projetos sobre saúde mental", "options": ["Prender quem tem preconceito", "Criar projetos sobre saúde mental", "Esperar passar"] },
+          { "name": "Como? (Meio/Modo)", "correct": "Palestras e debates", "options": ["Palestras e debates", "Por meio de mágica", "Gritando"] },
+          { "name": "Para quê? (Efeito)", "correct": "Reduzir o preconceito", "options": ["Ficar rico", "Reduzir o preconceito", "Nada"] },
+          { "name": "Detalhe extra (Detalhamento)", "correct": "Semana de Valorização da Vida", "options": ["Tipo assim", "Semana de Valorização da Vida", "Etc"] }
         ]
       }
     },
@@ -1027,7 +1045,24 @@ function renderClickError(stage) {
         
         // Click Handler
         span.onclick = function() {
-            if (this.classList.contains('found-correct') || this.classList.contains('found-wrong')) return;
+            // ATUALIZAÇÃO: Se já foi encontrado e corrigido, permitir clicar para ver o modal novamente
+            if (this.classList.contains('found-correct')) {
+                const idx = this.dataset.errIndex;
+                const errInfo = stage.content.errors[idx];
+                const comparisonHTML = `
+                    <div class="comparison-box">
+                        <div class="comp-row">
+                            <span class="comp-wrong">${errInfo.target}</span>
+                            <span class="comp-arrow">➔</span>
+                            <span class="comp-correct">${errInfo.correction}</span>
+                        </div>
+                    </div>
+                `;
+                showModal(true, "Revisão", `${errInfo.feedback}${comparisonHTML}`, false);
+                return;
+            }
+
+            if (this.classList.contains('found-wrong')) return;
 
             if (this.dataset.isError === "true") {
                 // ACERTO
@@ -1037,7 +1072,17 @@ function renderClickError(stage) {
                     this.classList.add('found-correct');
                     
                     const errInfo = stage.content.errors[idx];
-                    showModal(true, "Erro Encontrado!", `${errInfo.feedback}<br><b>Correção:</b> ${errInfo.correction}`, false);
+                    // NOVO HTML DE COMPARAÇÃO
+                    const comparisonHTML = `
+                        <div class="comparison-box">
+                            <div class="comp-row">
+                                <span class="comp-wrong">${errInfo.target}</span>
+                                <span class="comp-arrow">➔</span>
+                                <span class="comp-correct">${errInfo.correction}</span>
+                            </div>
+                        </div>
+                    `;
+                    showModal(true, "Erro Encontrado!", `${errInfo.feedback}${comparisonHTML}`, false);
                 }
             } else {
                 // ERRO (Falso positivo)
@@ -1136,6 +1181,15 @@ function renderCardChoice(stage) {
 
 // 5. SLOT MACHINE
 function renderSlotMachine(stage) {
+    // 1. Render Context Text if exists
+    if (stage.content.context_text) {
+        const contextDiv = document.createElement('div');
+        contextDiv.className = 'context-box';
+        // Allow newline in text
+        contextDiv.innerHTML = `<strong>Contexto da Solução:</strong><br><em>"${stage.content.context_text.replace(/\n/g, '<br>')}"</em>`;
+        ui.gameContent.appendChild(contextDiv);
+    }
+
     const container = document.createElement('div');
     container.className = 'slot-machine-container';
     state.tempData.slotSelections = {};
@@ -1204,6 +1258,7 @@ function renderWriting(stage) {
     const textarea = document.createElement('textarea');
     textarea.placeholder = stage.content.placeholder;
     textarea.id = 'essay-input';
+    textarea.spellcheck = false; // Disable native spellcheck
     ui.gameContent.appendChild(textarea);
 }
 
