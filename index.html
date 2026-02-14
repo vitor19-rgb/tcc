@@ -114,6 +114,19 @@
             .slot-machine-container .slot-row:last-child:nth-child(odd) {
                 grid-column: span 2;
             }
+            
+            /* FIX: Restore Row Layout for Desktop (Side-by-side) */
+            .slot-row {
+                flex-direction: row !important;
+                align-items: center !important;
+            }
+            .slot-label {
+                width: 30% !important;
+                margin-bottom: 0 !important;
+            }
+            .slot-select {
+                width: 70% !important;
+            }
 
             /* Buttons */
             .game-footer {
@@ -429,19 +442,24 @@
         .slot-machine-container { display: flex; flex-direction: column; gap: 10px; }
         .slot-row {
             display: flex;
-            align-items: center;
-            justify-content: space-between;
+            flex-direction: column; /* MOBILE FIX: Stack Vertically */
+            align-items: flex-start;
+            justify-content: flex-start;
             background: #f8f9fa;
-            padding: 10px;
+            padding: 15px;
             border-radius: 8px;
         }
-        .slot-label { font-weight: bold; width: 30%; }
+        .slot-label { 
+            font-weight: bold; 
+            width: 100%; /* MOBILE FIX: Full width */
+            margin-bottom: 5px;
+        }
         .slot-select {
-            width: 70%;
-            padding: 8px;
+            width: 100%; /* MOBILE FIX: Full width */
+            padding: 10px;
             border: 1px solid #ccc;
             border-radius: 6px;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
         }
 
         /* 6. Ordering (Atualizado) */
