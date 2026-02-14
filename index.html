@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Jornada da Nota 1000</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6c5ce7;
+            --primary-dark: #5243c2;
+            --secondary: #00b894;
+            --danger: #d63031;
+            --warning: #fdcb6e;
+            --background: #dfe6e9;
+            --card-bg: #ffffff;
+            --text: #2d3436;
+            --text-light: #636e72;
+            --border-radius: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Better for scrolling on mobile */
+        }
+
+        /* --- MOBILE FIRST CONTAINER --- */
+        #app {
+            width: 100%;
+            max-width: 480px; /* Default mobile constraints */
+            background-color: var(--card-bg);
+            min-height: 100vh;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            position: relative;
+            overflow-x: hidden;
+            transition: max-width 0.3s ease;
+        }
+
+        /* --- RESPONSIVIDADE DESKTOP --- */
+        @media (min-width: 768px) {
+            body {
+                align-items: center; /* Center vertically on desktop */
+                padding: 20px;
+            }
+
+            #app {
+                max-width: 1000px; /* Wider canvas */
+                min-height: 90vh;
+                height: auto;
+                border-radius: 24px;
+                box-shadow: 0 15px 50px rgba(0,0,0,0.15);
+                display: flex;
+                flex-direction: column;
+            }
+
+            /* Landing Page Typography */
+            #landing-screen h1 {
+                font-size: 3.5rem !important;
+            }
+            
+            /* Game Content Layout */
+            .game-content {
+                padding: 40px !important;
+            }
+
+            .instruction {
+                font-size: 1.4rem !important;
+                text-align: center;
+                max-width: 800px;
+                margin: 0 auto 40px auto !important;
+            }
+
+            /* Grid Layouts for Desktop */
+            
+            /* Stage 1: Support Texts */
+            .support-text-container {
+                display: grid !important;
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 20px;
+                max-height: 400px;
+            }
+
+            /* Stage 4: Cards Side-by-Side */
+            .cards-container {
+                flex-direction: row !important;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            .card {
+                flex: 1 1 280px; /* Grow/Shrink with base width */
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+            }
+
+            /* Stage 5: Slot Machine 2-Columns */
+            .slot-machine-container {
+                display: grid !important;
+                grid-template-columns: 1fr 1fr;
+                gap: 20px !important;
+            }
+            /* Make the last odd item span full width */
+            .slot-machine-container .slot-row:last-child:nth-child(odd) {
+                grid-column: span 2;
+            }
+
+            /* Buttons */
+            .game-footer {
+                display: flex;
+                justify-content: center;
+                background: transparent !important; /* Remove separation line bg */
+                border-top: none !important;
+            }
+            .btn {
+                max-width: 400px;
+                font-size: 1.2rem !important;
+            }
+
+            /* Map Constrain */
+            /* Keep map narrow so the path looks good */
+            #map-screen .map-path {
+                max-width: 400px;
+                margin: 0 auto;
+            }
+        }
+
+        /* --- UTILS --- */
+        .hidden { display: none !important; }
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.1s, background 0.2s;
+            box-shadow: 0 4px 0 var(--primary-dark);
+        }
+        .btn:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+        .btn-secondary { background-color: var(--text-light); box-shadow: 0 4px 0 #4b5457; }
+        .btn:disabled { background-color: #b2bec3; box-shadow: none; cursor: not-allowed; }
+
+        /* --- SCREENS --- */
+        
+        /* LANDING */
+        #landing-screen {
+            padding: 40px 20px;
+            text-align: center;
+            height: 100vh;
+            /* Fix for desktop: maintain height if app grows */
+            min-height: 100%; 
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border-radius: inherit; /* Inherit rounded corners on desktop */
+        }
+        #landing-screen h1 { font-size: 2.5rem; margin-bottom: 10px; line-height: 1.2; }
+        #landing-screen p { margin-bottom: 40px; opacity: 0.9; }
+
+        /* MAPA */
+        #map-screen { padding: 20px; padding-bottom: 80px; }
+        .map-header {
+            background: var(--primary);
+            color: white;
+            padding: 20px;
+            margin: -20px -20px 20px -20px;
+            border-bottom-left-radius: 30px;
+            border-bottom-right-radius: 30px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        
+        /* Adjust map header radius for desktop when container is rounded */
+        @media (min-width: 768px) {
+            .map-header {
+                border-radius: 24px 24px 30px 30px;
+            }
+        }
+
+        .map-path {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 40px;
+            position: relative;
+            padding-top: 20px;
+        }
+        /* Linha do caminho */
+        .map-path::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 8px;
+            background-color: #e0e0e0;
+            z-index: 0;
+        }
+        .node {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: #b2bec3;
+            z-index: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: 700;
+            font-size: 1.5rem;
+            position: relative;
+            cursor: pointer;
+            border: 4px solid white;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+            transition: all 0.2s;
+        }
+        .node.completed { background-color: var(--secondary); border-color: #55efc4; }
+        .node.current { 
+            background-color: var(--primary); 
+            transform: scale(1.1);
+            box-shadow: 0 0 20px var(--primary);
+        }
+        .node.current::after {
+            content: 'JOGAR';
+            position: absolute;
+            top: -30px;
+            background: white;
+            color: var(--primary);
+            padding: 4px 10px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            animation: bounce 1s infinite;
+        }
+        .node.locked { cursor: not-allowed; opacity: 0.6; }
+
+        /* GAMEPLAY CONTAINER */
+        #game-screen {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh; /* Mobile min-height */
+            height: 100%; /* Desktop inherits */
+        }
+        .game-header {
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .progress-bar-container {
+            flex-grow: 1;
+            height: 10px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            margin: 0 15px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background-color: var(--primary); /* ATUALIZAÇÃO: Cor roxa (primary) */
+            width: 0%;
+            transition: width 0.3s;
+        }
+        .game-content {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .game-footer {
+            padding: 20px;
+            border-top: 2px solid #f0f0f0;
+            background: white;
+            border-radius: 0 0 16px 16px; /* Rounded bottom on desktop */
+        }
+        .instruction {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text);
+        }
+
+        /* MECÂNICAS ESPECÍFICAS */
+        
+        /* 1. Selection & Textos de Apoio */
+        .support-text-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 5px; /* For scrollbar space */
+        }
+        .support-text-card {
+            background-color: #fdfdfd;
+            border: 1px solid #e0e0e0;
+            border-left: 5px solid var(--secondary);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .support-text-title {
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+        .support-text-body {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: var(--text);
+            font-style: italic;
+        }
+
+        .word-grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+        .word-chip {
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .word-chip:hover { transform: translateY(-2px); }
+        .word-chip.selected { background-color: #e0e0e0; border-color: var(--text); }
+        .word-chip.correct { background-color: var(--secondary); color: white; border-color: var(--secondary); }
+        .word-chip.wrong { background-color: var(--danger); color: white; border-color: var(--danger); }
+
+        /* 2. Click Error (Atualizado) */
+        .text-passage {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: justify;
+        }
+        /* Palavras Interativas: Estilo "Invisível" */
+        .interactive-word {
+            cursor: pointer;
+            padding: 2px 1px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        .interactive-word:hover {
+            background-color: #e0e0e0; /* Leve highlight no hover para indicar interatividade */
+        }
+        .interactive-word.found-correct {
+            background-color: var(--secondary);
+            color: white;
+            text-decoration: line-through;
+        }
+        .interactive-word.found-wrong {
+            background-color: var(--danger);
+            color: white;
+            animation: shake 0.5s;
+        }
+
+        /* 3. Drag/Drop (Click to Fill) */
+        .sentence-builder { font-size: 1.1rem; line-height: 2; }
+        .slot {
+            display: inline-block;
+            width: 100px;
+            height: 30px;
+            border-bottom: 2px solid var(--primary);
+            background: #f0f0f0;
+            margin: 0 5px;
+            vertical-align: middle;
+            text-align: center;
+            color: var(--primary);
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .options-pool { margin-top: 30px; display: flex; gap: 10px; flex-wrap: wrap; }
+        .option-pill {
+            background: var(--primary);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+        .option-pill.used { opacity: 0.3; pointer-events: none; }
+
+        /* 4. Card Choice */
+        .context-box {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 5px solid var(--primary);
+            font-style: italic;
+            color: #0d47a1;
+        }
+        .cards-container { display: flex; flex-direction: column; gap: 15px; }
+        .card {
+            border: 2px solid #e0e0e0;
+            padding: 15px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .card:hover { border-color: var(--primary); transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .card.selected { border-color: var(--primary); background-color: #f0f3ff; }
+        .card h3 { color: var(--primary); margin-bottom: 5px; }
+
+        /* 5. Slot Machine */
+        .slot-machine-container { display: flex; flex-direction: column; gap: 10px; }
+        .slot-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .slot-label { font-weight: bold; width: 30%; }
+        .slot-select {
+            width: 70%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        /* 6. Ordering (Atualizado) */
+        .order-list { display: flex; flex-direction: column; gap: 15px; }
+        .order-item {
+            background: white;
+            border: 2px solid #e0e0e0;
+            padding: 15px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center; /* Centraliza botões verticalmente */
+            height: auto; /* Permite crescer */
+            min-height: 80px;
+        }
+        .order-item-text {
+            flex: 1;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            white-space: normal; /* Garante quebra de linha */
+            margin-right: 15px;
+            text-align: justify;
+        }
+        .order-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            min-width: 30px;
+        }
+        .order-controls button {
+            background: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            color: var(--text);
+            padding: 5px;
+        }
+        .order-controls button:hover { background: #e0e0e0; }
+
+        /* 7. Writing */
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 1rem;
+            resize: none;
+        }
+        textarea:focus { outline: none; border-color: var(--primary); }
+
+        /* MODALS */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            animation: popIn 0.3s;
+        }
+        .modal-icon { font-size: 3rem; margin-bottom: 15px; display: block; }
+        .feedback-bad { color: var(--danger); }
+        .feedback-good { color: var(--secondary); }
+        .score-box { 
+            background: #f0f0f0; 
+            padding: 15px; 
+            border-radius: 10px; 
+            margin: 15px 0;
+            text-align: left;
+        }
+        
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <!-- 1. LANDING PAGE -->
+    <div id="landing-screen">
+        <div style="font-size: 4rem; margin-bottom: 20px;">🚀</div>
+        <h1>A Jornada da<br>Nota 1000</h1>
+        <p>Domine a Redação do ENEM jogando!</p>
+        <button id="btn-login" class="btn" style="background: white; color: var(--primary);">ENTRAR NA AVENTURA</button>
+    </div>
+
+    <!-- 2. MAPA -->
+    <div id="map-screen" class="hidden">
+        <div class="map-header">
+            <h2>Mundo 1: O Estigma Mental</h2>
+            <p>Complete os desafios para avançar</p>
+        </div>
+        <div class="map-path" id="map-nodes-container">
+            <!-- Nodes gerados via JS -->
+        </div>
+    </div>
+
+    <!-- 3. GAMEPLAY -->
+    <div id="game-screen" class="hidden">
+        <div class="game-header">
+            <button id="btn-back-map" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">⬅️</button>
+            <div class="progress-bar-container">
+                <div id="game-progress" class="progress-bar-fill"></div>
+            </div>
+            <span id="stage-counter" style="font-weight:bold; color:var(--primary);">1/7</span>
+        </div>
+        
+        <div class="game-content" id="game-content-area">
+            <!-- Conteúdo dinâmico da fase -->
+        </div>
+
+        <div class="game-footer">
+            <button id="btn-check" class="btn">VERIFICAR</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL FEEDBACK -->
+<div id="modal-feedback" class="modal-overlay hidden">
+    <div class="modal-content">
+        <span id="modal-icon" class="modal-icon">❌</span>
+        <h3 id="modal-title">Ops!</h3>
+        <p id="modal-msg" style="margin: 15px 0;">Mensagem de erro aqui.</p>
+        <div id="modal-extra-content"></div>
+        <button id="btn-modal-action" class="btn">TENTAR NOVAMENTE</button>
+    </div>
+</div>
+
+<script>
+/* =========================================
+   DADOS DO JOGO (JSON ATUALIZADO)
+   ========================================= */
+const gameData = {
+  "world_info": {
+    "id": 1,
+    "title": "Mundo 2020: O Estigma Mental",
+    "theme": "O estigma associado às doenças mentais na sociedade brasileira"
+  },
+  "stages": [
+    {
+      "id": 1,
+      "title": "O Decifrador",
+      "type": "selection",
+      "instruction": "Leia os textos motivadores abaixo e clique nas 3 palavras-chave que definem o TEMA da redação. Cuidado com as armadilhas!",
+      "content": {
+        "support_texts": [
+          {
+            "id": "Texto I",
+            "body": "A maior parte das pessoas, quando ouve falar em 'saúde mental', pensa em 'doença mental'. Mas a saúde mental implica muito mais que a ausência de doenças mentais. Pessoas mentalmente saudáveis compreendem que ninguém é perfeito, que todos possuem limites e vivenciam diariamente uma série de emoções como alegria, amor, satisfação, tristeza, raiva e frustração."
+          },
+          {
+            "id": "Texto II",
+            "body": "A origem da palavra 'estigma' aponta para marcas ou cicatrizes deixadas por feridas. Por extensão, passou a designar marcas feitas com ferro em brasa em pessoas que se desejava separar da sociedade. Hoje, relegamos preconceito e falta de informação a pessoas que sofrem de depressão, ansiedade e outros transtornos. Achar que transtorno mental é 'frescura' cria distância dos sentimentos reais."
+          },
+          {
+            "id": "Texto III (Dados)",
+            "body": "DADOS ALARMANTES: 1) O Brasil é o país mais depressivo da América Latina. 2) A depressão é a doença mais incapacitante do mundo. 3) Mulheres afetadas são 30% a mais que homens. 4) Prejuízo econômico mundial de 1 trilhão de dólares devido aos transtornos mentais."
+          }
+        ],
+        "options": [
+          { "word": "Estigma", "is_correct": true },
+          { "word": "Tristeza", "is_correct": false, "feedback": "Cuidado! Tristeza é citada no Texto I como uma emoção comum, não é o tema central." },
+          { "word": "Doenças Mentais", "is_correct": true },
+          { "word": "Mundo", "is_correct": false, "feedback": "Atenção! O Texto III cita dados mundiais, mas o tema pede foco na Sociedade Brasileira." },
+          { "word": "Sociedade Brasileira", "is_correct": true },
+          { "word": "Frescura", "is_correct": false, "feedback": "O Texto II cita 'frescura' como exemplo de preconceito (senso comum), não use como termo técnico." }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "title": "O Detetive",
+      "type": "click_error",
+      "instruction": "O texto abaixo parece normal, mas tem 3 erros escondidos. Clique EXATAMENTE em cima das palavras ou expressões incorretas.",
+      "content": {
+        "text_full": "O preconceito contra pessoas com transtornos mentais, dificulta a busca por tratamento. Isso ocorre devido a falta de debates. Consequentemente, os índices de depressão aumenta a cada ano.",
+        "errors": [
+          {
+            "target": "mentais,",
+            "correction": "mentais",
+            "feedback": "Achou! Nunca separe o sujeito do verbo com vírgula."
+          },
+          {
+            "target": "dificulta",
+            "correction": "dificulta",
+            "feedback": "Isso! A vírgula anterior estava errada."
+          },
+          {
+            "target": "devido a",
+            "correction": "devido à",
+            "feedback": "Boa! 'Falta' exige artigo 'a', então precisa de crase: 'devido à falta'."
+          },
+          {
+            "target": "aumenta",
+            "correction": "aumentam",
+            "feedback": "Correto! Os índices (plural) aumentam (plural)."
+          }
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "title": "O Engenheiro",
+      "type": "drag_drop",
+      "instruction": "Preencha as lacunas com os conectivos corretos.",
+      "content": {
+        "sentence_parts": [
+          "Muitos acham que depressão é passageira. ",
+          "{{SLOT_1}}",
+          ", a OMS alerta que é uma doença grave. ",
+          "{{SLOT_2}}",
+          ", precisamos quebrar esse estigma."
+        ],
+        "options": [
+          { "text": "Entretanto", "is_correct_for": "SLOT_1", "feedback_wrong": "Esse conectivo indica Oposição." },
+          { "text": "Portanto", "is_correct_for": "SLOT_2", "feedback_wrong": "Esse conectivo indica Conclusão." },
+          { "text": "Porque", "is_correct_for": null, "feedback_wrong": "Isso é explicação." },
+          { "text": "Ou seja", "is_correct_for": null, "feedback_wrong": "Isso serve para explicar." }
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "title": "O Estrategista",
+      "type": "card_choice",
+      "instruction": "Você está escrevendo o desenvolvimento sobre a exclusão social. Leia o seu argumento abaixo e escolha a Carta de Repertório que melhor PROVA o que você disse.",
+      "content": {
+        "context_text": "Historicamente, o Brasil tratou a saúde mental com isolamento e violência. Durante décadas, pessoas consideradas 'inadequadas' eram enviadas para manicômios onde perdiam sua humanidade e eram esquecidas pela sociedade. Para legitimar esse argumento de exclusão histórica, qual fato você cita?",
+        "cards": [
+          {
+            "title": "O Holocausto Brasileiro",
+            "description": "Citar o Hospital Colônia de Barbacena, onde milhares morreram por descaso.",
+            "value": 1000,
+            "is_correct": true,
+            "feedback": "Perfeito! Esse fato histórico brasileiro prova a tese da exclusão e do tratamento desumano no país."
+          },
+          {
+            "title": "Filme 'Coringa'",
+            "description": "Citar o filme americano onde o vilão sofre por falta de tratamento.",
+            "value": 600,
+            "is_correct": false,
+            "feedback": "O filme é bom, mas como seu argumento fala da história do BRASIL, o Holocausto Brasileiro é muito mais forte."
+          },
+          {
+            "title": "Caso da minha vizinha",
+            "description": "Contar que sua vizinha foi internada e ninguém a visitava.",
+            "value": 0,
+            "is_correct": false,
+            "feedback": "Erro grave! A redação exige impessoalidade e fatos de conhecimento público. Casos particulares não valem nota."
+          }
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "title": "O Prefeito",
+      "type": "slot_machine",
+      "instruction": "Monte a proposta de intervenção perfeita.",
+      "content": {
+        "slots": [
+          { "name": "Agente", "correct": "Ministério da Educação", "options": ["Eu mesmo", "Ministério da Educação", "A Polícia"] },
+          { "name": "Ação", "correct": "Criar projetos sobre saúde mental", "options": ["Prender quem tem preconceito", "Criar projetos sobre saúde mental", "Esperar passar"] },
+          { "name": "Meio", "correct": "Palestras e debates", "options": ["Palestras e debates", "Por meio de mágica", "Gritando"] },
+          { "name": "Efeito", "correct": "Reduzir o preconceito", "options": ["Ficar rico", "Reduzir o preconceito", "Nada"] },
+          { "name": "Detalhamento", "correct": "Semana de Valorização da Vida", "options": ["Tipo assim", "Semana de Valorização da Vida", "Etc"] }
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "title": "Boss Battle",
+      "type": "ordering",
+      "instruction": "A redação nota 1000 foi desmontada. Leia os parágrafos INTEIROS e arraste-os para a ordem correta da estrutura dissertativa.",
+      "content": {
+        "blocks": [
+          {
+            "id": "C",
+            "text": "A obra 'O Alienista', do realista Machado de Assis, retrata a história do médico Simão Bacamarte, que interna arbitrariamente os cidadãos de Itaguaí ao enxergar loucura em todos. Fora da ficção, a sociedade brasileira contemporânea ainda perpetua estigmas graves em relação às doenças mentais, agindo com a mesma falta de critério do personagem literário. Esse cenário de exclusão persiste, fundamentalmente, devido à negligência governamental na educação e à representação midiática estereotipada dos transtornos psicossociais.",
+            "order": 1
+          },
+          {
+            "id": "B",
+            "text": "Em primeira análise, é imperativo destacar que o desconhecimento sustenta o preconceito. Conforme o filósofo Immanuel Kant, o ser humano é aquilo que a educação faz dele. No entanto, o sistema educacional brasileiro raramente aborda a saúde mental de forma técnica e humanizada, o que leva muitos jovens a associarem depressão e ansiedade a 'frescura' ou 'falta de Deus'. Essa lacuna cognitiva, herdada de um passado manicomial, impede que o estigma seja desconstruído na base da formação cidadã.",
+            "order": 2
+          },
+          {
+            "id": "D",
+            "text": "Ademais, a indústria cultural exerce um papel crucial na manutenção desse quadro. Filmes, novelas e noticiários frequentemente retratam indivíduos com transtornos psíquicos como violentos, incapazes ou perigosos, criando uma imagem distorcida no imaginário coletivo. Essa construção narrativa sensacionalista reforça o medo e a segregação, dificultando a reintegração social e profissional daqueles que sofrem com tais patologias, silenciando suas dores reais em prol do entretenimento.",
+            "order": 3
+          },
+          {
+            "id": "A",
+            "text": "Portanto, medidas são necessárias para mitigar essa problemática estigmatizante. Cabe ao Ministério da Educação, em parceria com psicólogos, instituir a 'Semana de Saúde Mental' nas escolas, por meio de palestras e debates abertos com a comunidade. Tais ações devem visar desmistificar transtornos e orientar sobre tratamentos, com o intuito de formar uma geração mais empática. Somente assim, o Brasil deixará de refletir os erros de Itaguaí, construindo uma sociedade onde a diferença não seja motivo de exclusão.",
+            "order": 4
+          }
+        ]
+      }
+    },
+    {
+      "id": 7,
+      "title": "A Publicação",
+      "type": "writing",
+      "instruction": "Escreva sua redação. A IA corrigirá!",
+      "content": {
+        "placeholder": "Digite sua redação aqui...",
+        "ai_system_prompt": "..."
+      }
+    }
+  ]
+};
+
+/* =========================================
+   ESTADO E UTILITÁRIOS
+   ========================================= */
+const state = {
+    userLoggedIn: localStorage.getItem('user_logged_in') === 'true',
+    currentStageId: parseInt(localStorage.getItem('current_stage_id')) || 1,
+    unlockedStageId: parseInt(localStorage.getItem('unlocked_stage_id')) || 1,
+    currentStageData: null,
+    tempData: {} 
+};
+
+// DOM Elements
+const screens = {
+    landing: document.getElementById('landing-screen'),
+    map: document.getElementById('map-screen'),
+    game: document.getElementById('game-screen')
+};
+
+const ui = {
+    mapContainer: document.getElementById('map-nodes-container'),
+    gameContent: document.getElementById('game-content-area'),
+    progressBar: document.getElementById('game-progress'),
+    stageCounter: document.getElementById('stage-counter'),
+    btnCheck: document.getElementById('btn-check'),
+    modal: document.getElementById('modal-feedback'),
+    modalTitle: document.getElementById('modal-title'),
+    modalMsg: document.getElementById('modal-msg'),
+    modalIcon: document.getElementById('modal-icon'),
+    modalAction: document.getElementById('btn-modal-action'),
+    modalExtra: document.getElementById('modal-extra-content')
+};
+
+/* =========================================
+   LÓGICA DE NAVEGAÇÃO
+   ========================================= */
+function init() {
+    if (state.userLoggedIn) {
+        showScreen('map');
+        renderMap();
+    } else {
+        showScreen('landing');
+    }
+}
+
+function showScreen(screenName) {
+    Object.values(screens).forEach(el => el.classList.add('hidden'));
+    screens[screenName].classList.remove('hidden');
+}
+
+document.getElementById('btn-login').addEventListener('click', () => {
+    localStorage.setItem('user_logged_in', 'true');
+    state.userLoggedIn = true;
+    showScreen('map');
+    renderMap();
+});
+
+document.getElementById('btn-back-map').addEventListener('click', () => {
+    showScreen('map');
+    renderMap();
+});
+
+/* =========================================
+   MAPA
+   ========================================= */
+function renderMap() {
+    ui.mapContainer.innerHTML = '';
+    
+    gameData.stages.forEach((stage, index) => {
+        const node = document.createElement('div');
+        node.className = 'node';
+        node.textContent = stage.id;
+        
+        // Lógica de Estado do Nó
+        if (stage.id < state.unlockedStageId) {
+            node.classList.add('completed');
+            node.innerHTML = '★'; // Star icon for completed
+        } else if (stage.id === state.unlockedStageId) {
+            node.classList.add('current');
+        } else {
+            node.classList.add('locked');
+            node.innerHTML = '🔒';
+        }
+
+        // Alternar margem para efeito "Sinuoso"
+        if (index % 2 === 1) node.style.marginLeft = '60px';
+        else node.style.marginRight = '60px';
+
+        node.onclick = () => {
+            if (stage.id <= state.unlockedStageId) {
+                loadStage(stage.id);
+            }
+        };
+
+        ui.mapContainer.appendChild(node);
+    });
+}
+
+/* =========================================
+   GAME ENGINE (MOTOR DO JOGO)
+   ========================================= */
+function loadStage(id) {
+    const stage = gameData.stages.find(s => s.id === id);
+    if (!stage) return;
+
+    state.currentStageData = stage;
+    state.tempData = {}; // Reset temp data
+    
+    // UI Updates
+    showScreen('game');
+    ui.gameContent.innerHTML = '';
+    ui.btnCheck.textContent = stage.type === 'writing' ? 'ENVIAR PARA IA' : 'VERIFICAR';
+    ui.btnCheck.disabled = false;
+    ui.stageCounter.textContent = `${stage.id}/7`;
+    
+    // ATUALIZAÇÃO: Calcula o progresso INICIAL da barra
+    // Se estou na fase 1, a barra começa vazia. Se estou na 7, começa cheia até a 6.
+    const startProgress = ((stage.id - 1) / 7) * 100;
+    ui.progressBar.style.width = `${startProgress}%`;
+
+    // Header Info
+    const title = document.createElement('h2');
+    title.textContent = stage.title;
+    title.style.color = 'var(--primary)';
+    
+    const instr = document.createElement('p');
+    instr.className = 'instruction';
+    instr.textContent = stage.instruction;
+    
+    ui.gameContent.appendChild(title);
+    ui.gameContent.appendChild(instr);
+
+    // RENDERIZAR MECÂNICA ESPECÍFICA
+    switch (stage.type) {
+        case 'selection': renderSelection(stage); break;
+        case 'click_error': renderClickError(stage); break;
+        case 'drag_drop': renderDragDrop(stage); break;
+        case 'card_choice': renderCardChoice(stage); break;
+        case 'slot_machine': renderSlotMachine(stage); break;
+        case 'ordering': renderOrdering(stage); break;
+        case 'writing': renderWriting(stage); break;
+    }
+
+    // Configurar Botão de Verificar
+    ui.btnCheck.onclick = () => checkAnswer(stage);
+}
+
+/* --- RENDERIZADORES --- */
+
+// 1. SELECTION
+function renderSelection(stage) {
+    state.tempData.selectedWords = [];
+    
+    // 1. Render Support Texts
+    if (stage.content.support_texts) {
+        const textContainer = document.createElement('div');
+        textContainer.className = 'support-text-container';
+        
+        stage.content.support_texts.forEach(text => {
+            const card = document.createElement('div');
+            card.className = 'support-text-card';
+            card.innerHTML = `
+                <div class="support-text-title">${text.id}</div>
+                <div class="support-text-body">"${text.body}"</div>
+            `;
+            textContainer.appendChild(card);
+        });
+        ui.gameContent.appendChild(textContainer);
+    }
+
+    // 2. Render Options
+    const container = document.createElement('div');
+    container.className = 'word-grid';
+    
+    stage.content.options.forEach(opt => {
+        const chip = document.createElement('div');
+        chip.className = 'word-chip';
+        chip.textContent = opt.word;
+        chip.onclick = () => {
+            chip.classList.toggle('selected');
+            if (chip.classList.contains('selected')) {
+                state.tempData.selectedWords.push(opt.word);
+            } else {
+                state.tempData.selectedWords = state.tempData.selectedWords.filter(w => w !== opt.word);
+            }
+        };
+        container.appendChild(chip);
+    });
+    ui.gameContent.appendChild(container);
+}
+
+// 2. CLICK ERROR (REFEITO: Clean UX + Tokenization)
+function renderClickError(stage) {
+    const container = document.createElement('div');
+    container.className = 'text-passage';
+    
+    state.tempData.foundErrors = new Set();
+    const fullText = stage.content.text_full;
+    const errorsList = stage.content.errors.map(e => e.target); // e.g., ["mentais,", "dificulta", "devido a", "aumenta"]
+    
+    // Passo 1: Tokenizar mantendo os erros inteiros (especialmente os compostos como "devido a")
+    // Estratégia: Substituir erros por placeholders únicos para proteger espaços internos
+    let processedText = fullText;
+    const errorMap = {};
+    
+    errorsList.forEach((errPhrase, idx) => {
+        const key = `__ERR_${idx}__`;
+        errorMap[key] = errPhrase;
+        // Replace first occurrence only to avoid messing up duplicates if any (though unlikely here)
+        processedText = processedText.replace(errPhrase, key);
+    });
+
+    // Passo 2: Quebrar o restante por espaços
+    const rawTokens = processedText.split(' ');
+    
+    // Passo 3: Reconstruir o HTML
+    rawTokens.forEach((token, index) => {
+        const span = document.createElement('span');
+        span.className = 'interactive-word';
+        
+        // Verifica se é um placeholder de erro
+        if (token.startsWith('__ERR_') && token.endsWith('__')) {
+            const originalError = errorMap[token];
+            span.textContent = originalError;
+            span.dataset.isError = "true";
+            // Achar o índice correto no array de errors para pegar o feedback
+            const errIndex = stage.content.errors.findIndex(e => e.target === originalError);
+            span.dataset.errIndex = errIndex;
+        } else {
+            span.textContent = token;
+            span.dataset.isError = "false";
+        }
+
+        // Adicionar espaço visual após a palavra (exceto na última)
+        const space = document.createTextNode(' ');
+        
+        // Click Handler
+        span.onclick = function() {
+            if (this.classList.contains('found-correct') || this.classList.contains('found-wrong')) return;
+
+            if (this.dataset.isError === "true") {
+                // ACERTO
+                const idx = this.dataset.errIndex;
+                if (!state.tempData.foundErrors.has(idx)) {
+                    state.tempData.foundErrors.add(idx);
+                    this.classList.add('found-correct');
+                    
+                    const errInfo = stage.content.errors[idx];
+                    showModal(true, "Erro Encontrado!", `${errInfo.feedback}<br><b>Correção:</b> ${errInfo.correction}`, false);
+                }
+            } else {
+                // ERRO (Falso positivo)
+                this.classList.add('found-wrong');
+                setTimeout(() => this.classList.remove('found-wrong'), 500); // Remove red shake after anim
+                // Opcional: Perder vida ou só feedback visual
+            }
+        };
+
+        container.appendChild(span);
+        container.appendChild(space);
+    });
+
+    ui.gameContent.appendChild(container);
+}
+
+// 3. DRAG & DROP
+function renderDragDrop(stage) {
+    const container = document.createElement('div');
+    container.className = 'sentence-builder';
+    state.tempData.slots = {}; 
+
+    let htmlContent = "";
+    stage.content.sentence_parts.forEach(part => {
+        if (part.includes('{{SLOT')) {
+            const slotId = part.replace('{{','').replace('}}','');
+            htmlContent += `<span class="slot" data-id="${slotId}" onclick="handleSlotClick('${slotId}')">?</span>`;
+        } else {
+            htmlContent += part;
+        }
+    });
+    container.innerHTML = htmlContent;
+
+    const optionsContainer = document.createElement('div');
+    optionsContainer.className = 'options-pool';
+    stage.content.options.forEach(opt => {
+        const pill = document.createElement('div');
+        pill.className = 'option-pill';
+        pill.textContent = opt.text;
+        pill.onclick = function() {
+            if (this.classList.contains('used')) return;
+            const emptySlot = Array.from(document.querySelectorAll('.slot')).find(s => s.textContent === '?');
+            if (emptySlot) {
+                const slotId = emptySlot.getAttribute('data-id');
+                state.tempData.slots[slotId] = opt.text;
+                emptySlot.textContent = opt.text;
+                emptySlot.style.background = '#dff9fb';
+                this.classList.add('used');
+            }
+        };
+        optionsContainer.appendChild(pill);
+    });
+
+    ui.gameContent.appendChild(container);
+    ui.gameContent.appendChild(optionsContainer);
+    
+    window.handleSlotClick = (slotId) => {
+        const val = state.tempData.slots[slotId];
+        if (val) {
+            const pills = document.querySelectorAll('.option-pill');
+            pills.forEach(p => { if (p.textContent === val) p.classList.remove('used'); });
+            const slotEl = document.querySelector(`.slot[data-id="${slotId}"]`);
+            slotEl.textContent = '?';
+            slotEl.style.background = '#f0f0f0';
+            delete state.tempData.slots[slotId];
+        }
+    };
+}
+
+// 4. CARD CHOICE
+function renderCardChoice(stage) {
+    if (stage.content.context_text) {
+        const contextDiv = document.createElement('div');
+        contextDiv.className = 'context-box';
+        contextDiv.innerHTML = `<strong>Contexto do Argumento:</strong><br><em>"${stage.content.context_text}"</em>`;
+        ui.gameContent.appendChild(contextDiv);
+    }
+
+    const container = document.createElement('div');
+    container.className = 'cards-container';
+    state.tempData.selectedCardIdx = null;
+
+    stage.content.cards.forEach((card, idx) => {
+        const el = document.createElement('div');
+        el.className = 'card';
+        el.innerHTML = `<h3>${card.title}</h3><p>${card.description}</p>`;
+        el.onclick = () => {
+            document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+            el.classList.add('selected');
+            state.tempData.selectedCardIdx = idx;
+        };
+        container.appendChild(el);
+    });
+    ui.gameContent.appendChild(container);
+}
+
+// 5. SLOT MACHINE
+function renderSlotMachine(stage) {
+    const container = document.createElement('div');
+    container.className = 'slot-machine-container';
+    state.tempData.slotSelections = {};
+
+    stage.content.slots.forEach((slot, idx) => {
+        const row = document.createElement('div');
+        row.className = 'slot-row';
+        
+        const label = document.createElement('div');
+        label.className = 'slot-label';
+        label.textContent = slot.name;
+
+        const select = document.createElement('select');
+        select.className = 'slot-select';
+        select.innerHTML = '<option value="">Selecione...</option>';
+        slot.options.forEach(opt => {
+            select.innerHTML += `<option value="${opt}">${opt}</option>`;
+        });
+        select.onchange = (e) => state.tempData.slotSelections[idx] = e.target.value;
+
+        row.appendChild(label);
+        row.appendChild(select);
+        container.appendChild(row);
+    });
+    ui.gameContent.appendChild(container);
+}
+
+// 6. ORDERING (Atualizado com CSS melhorado)
+function renderOrdering(stage) {
+    const container = document.createElement('div');
+    container.className = 'order-list';
+    
+    // Shuffle inicial
+    let items = [...stage.content.blocks].sort(() => Math.random() - 0.5);
+    state.tempData.currentOrder = items;
+
+    function renderList() {
+        container.innerHTML = '';
+        state.tempData.currentOrder.forEach((block, idx) => {
+            const el = document.createElement('div');
+            el.className = 'order-item';
+            // Usamos uma div wrapper para o texto para aplicar flex corretamente
+            el.innerHTML = `
+                <div class="order-item-text">${block.text}</div>
+                <div class="order-controls">
+                    ${idx > 0 ? `<button onclick="moveOrder(${idx}, -1)">▲</button>` : ''}
+                    ${idx < items.length - 1 ? `<button onclick="moveOrder(${idx}, 1)">▼</button>` : ''}
+                </div>
+            `;
+            container.appendChild(el);
+        });
+    }
+
+    window.moveOrder = (index, direction) => {
+        const arr = state.tempData.currentOrder;
+        [arr[index], arr[index + direction]] = [arr[index + direction], arr[index]];
+        renderList();
+    };
+
+    renderList();
+    ui.gameContent.appendChild(container);
+}
+
+// 7. WRITING
+function renderWriting(stage) {
+    const textarea = document.createElement('textarea');
+    textarea.placeholder = stage.content.placeholder;
+    textarea.id = 'essay-input';
+    ui.gameContent.appendChild(textarea);
+}
+
+/* =========================================
+   VERIFICAÇÃO DE RESPOSTAS
+   ========================================= */
+function checkAnswer(stage) {
+    let isCorrect = false;
+    let feedback = "";
+    let extraHTML = "";
+
+    switch (stage.type) {
+        case 'selection':
+            const correctWords = stage.content.options.filter(o => o.is_correct).map(o => o.word);
+            const userWords = state.tempData.selectedWords || [];
+            
+            if (userWords.length !== 3) {
+                return showModal(false, "Incompleto", "Você precisa selecionar exatamente 3 palavras.");
+            }
+            const wrongs = userWords.filter(w => !correctWords.includes(w));
+            if (wrongs.length === 0) isCorrect = true;
+            else {
+                const wrongObj = stage.content.options.find(o => o.word === wrongs[0]);
+                feedback = wrongObj.feedback;
+            }
+            break;
+
+        case 'click_error':
+            const totalErrors = stage.content.errors.length;
+            const found = state.tempData.foundErrors ? state.tempData.foundErrors.size : 0;
+            if (found === totalErrors) {
+                isCorrect = true;
+                feedback = "Você encontrou todos os desvios gramaticais!";
+            } else {
+                return showModal(false, "Faltam erros!", `Você encontrou ${found} de ${totalErrors} erros. Continue procurando.`);
+            }
+            break;
+
+        case 'drag_drop':
+            const slots = state.tempData.slots;
+            const keys = Object.keys(slots);
+            if (keys.length < 2) return showModal(false, "Incompleto", "Preencha todas as lacunas.");
+            
+            let firstWrong = null;
+            keys.forEach(slotId => {
+                const userVal = slots[slotId];
+                const optObj = stage.content.options.find(o => o.text === userVal);
+                if (optObj.is_correct_for !== slotId) firstWrong = optObj;
+            });
+
+            if (!firstWrong) isCorrect = true;
+            else feedback = firstWrong.feedback_wrong;
+            break;
+
+        case 'card_choice':
+            if (state.tempData.selectedCardIdx === null) return showModal(false, "Escolha!", "Selecione uma carta.");
+            const card = stage.content.cards[state.tempData.selectedCardIdx];
+            isCorrect = card.is_correct;
+            feedback = card.feedback;
+            break;
+
+        case 'slot_machine':
+            const picks = state.tempData.slotSelections || {};
+            if (Object.keys(picks).length < 5) return showModal(false, "Incompleto", "Preencha todos os 5 elementos.");
+            
+            let errorFound = false;
+            stage.content.slots.forEach((s, i) => {
+                if (picks[i] !== s.correct) errorFound = true;
+            });
+            isCorrect = !errorFound;
+            if(!isCorrect) feedback = "Alguns elementos não combinam com uma proposta formal. Tente ser mais técnico.";
+            break;
+
+        case 'ordering':
+            const currentIds = state.tempData.currentOrder.map(b => b.id).join('');
+            const correctArr = [...stage.content.blocks].sort((a,b) => a.order - b.order);
+            const correctIds = correctArr.map(b => b.id).join('');
+            
+            if (currentIds === correctIds) isCorrect = true;
+            else feedback = "A ordem lógica não está correta. Lembre-se: Intro -> D1 -> D2 -> Conclusão.";
+            break;
+
+        case 'writing':
+            const text = document.getElementById('essay-input').value;
+            if (text.length < 50) return showModal(false, "Muito curto", "Escreva pelo menos um parágrafo consistente.");
+            
+            ui.btnCheck.disabled = true;
+            ui.btnCheck.textContent = "IA CORRIGINDO...";
+            
+            setTimeout(() => {
+                const mockScore = {
+                    nota_final: 920,
+                    competencias: {c1: 160, c2: 200, c3: 180, c4: 200, c5: 180},
+                    feedback: "Excelente argumentação! Pequenos desvios na C1 e C3."
+                };
+                
+                isCorrect = true;
+                feedback = mockScore.feedback;
+                extraHTML = `
+                    <div class="score-box">
+                        <h3>Nota Final: <span style="color:var(--primary)">${mockScore.nota_final}</span></h3>
+                        <small>C1: ${mockScore.competencias.c1} | C2: ${mockScore.competencias.c2}</small><br>
+                        <small>C3: ${mockScore.competencias.c3} | C4: ${mockScore.competencias.c4} | C5: ${mockScore.competencias.c5}</small>
+                    </div>
+                `;
+                // ATUALIZAÇÃO: Preenche barra completa no final da escrita
+                ui.progressBar.style.width = '100%';
+                finishGame(stage.id, feedback, extraHTML);
+            }, 2000);
+            return; 
+    }
+
+    if (isCorrect) {
+        // ATUALIZAÇÃO: Preenche a barra com o progresso da fase atual
+        // Dá a sensação visual de "completou este pedaço"
+        const endProgress = (stage.id / 7) * 100;
+        ui.progressBar.style.width = `${endProgress}%`;
+
+        if (stage.type !== 'writing') {
+            showModal(true, "Mandou Bem!", feedback || "Resposta Correta!", true);
+        }
+    } else {
+        showModal(false, "Tente de novo", feedback);
+    }
+}
+
+function finishGame(stageId, feedback, extraHTML) {
+    const nextId = stageId + 1;
+    if (nextId > state.unlockedStageId) {
+        state.unlockedStageId = nextId;
+        localStorage.setItem('unlocked_stage_id', nextId);
+    }
+    
+    ui.modalIcon.textContent = "🏆";
+    ui.modalTitle.textContent = "Estágio Concluído!";
+    ui.modalTitle.style.color = "var(--secondary)";
+    ui.modalMsg.innerHTML = feedback;
+    ui.modalExtra.innerHTML = extraHTML;
+    ui.modalAction.textContent = "VOLTAR AO MAPA";
+    
+    ui.modalAction.onclick = () => {
+        ui.modal.classList.add('hidden');
+        showScreen('map');
+        renderMap();
+    };
+    
+    ui.modal.classList.remove('hidden');
+}
+
+function showModal(isSuccess, title, msg, isStageClear = false) {
+    ui.modalIcon.textContent = isSuccess ? (isStageClear ? "⭐" : "✅") : "❌";
+    ui.modalTitle.textContent = title;
+    ui.modalTitle.style.color = isSuccess ? "var(--secondary)" : "var(--danger)";
+    ui.modalMsg.innerHTML = msg;
+    ui.modalExtra.innerHTML = "";
+    
+    ui.modalAction.textContent = isSuccess ? (isStageClear ? "PRÓXIMO" : "CONTINUAR") : "TENTAR NOVAMENTE";
+    
+    ui.modalAction.onclick = () => {
+        ui.modal.classList.add('hidden');
+        if (isStageClear) {
+            const currentId = state.currentStageData.id;
+            const nextId = currentId + 1;
+            
+            if (nextId > state.unlockedStageId) {
+                state.unlockedStageId = nextId;
+                localStorage.setItem('unlocked_stage_id', nextId);
+            }
+
+            if (nextId <= 7) { 
+               showScreen('map');
+               renderMap();
+            }
+        }
+    };
+    
+    ui.modal.classList.remove('hidden');
+}
+
+init();
+
+</script>
+</body>
+</html>
